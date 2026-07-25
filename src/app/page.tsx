@@ -26,13 +26,16 @@ export default function Dashboard() {
   const fetchConversations = useCallback(async () => {
     try {
       const res = await fetch("/api/conversations");
-      const data = await res.json();
-      if (!res.ok) {
-        setError(`API error: ${data.error || res.statusText}`);
+      let data: unknown;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        setError(`API returned ${res.status}: ${text.slice(0, 200)}`);
         return;
       }
-      if (!Array.isArray(data)) {
-        setError("Unexpected response from API");
+      if (!res.ok || !Array.isArray(data)) {
+        setError(`API error: ${(data as Record<string, unknown>)?.error || res.statusText}`);
         return;
       }
       setError(null);
@@ -45,14 +48,31 @@ export default function Dashboard() {
   const fetchMessages = useCallback(async (convoId: string) => {
     try {
       const res = await fetch(`/api/conversations/${convoId}/messages`);
-      if (!res.ok) return;
       const data = await res.json();
-      if (!Array.isArray(data)) return;
+      if (!res.ok || !Array.isArray(data)) return;
       setMessages(data);
     } catch {
       // Silently fail
     }
   }, []);
+
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/conversations/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(`Delete failed: ${data.error || res.statusText}`);
+        return;
+      }
+      if (selectedId === id) {
+        setSelectedId(null);
+        setMessages([]);
+      }
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+    } catch (e: unknown) {
+      setError(`Delete error: ${(e as Error).message}`);
+    }
+  }
 
   useEffect(() => {
     fetchConversations();
@@ -222,15 +242,28 @@ export default function Dashboard() {
                       <p className="text-xs text-white/30 truncate">
                         {convo.username ? `@${convo.username}` : convo.last_message || ""}
                       </p>
-                      <span
-                        className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 uppercase tracking-wide ${
-                          convo.mode === "agent"
-                            ? "bg-purple-500/20 text-purple-400"
-                            : "bg-amber-500/20 text-amber-400"
-                        }`}
-                      >
-                        {convo.mode === "agent" ? "AI" : "You"}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 uppercase tracking-wide ${
+                            convo.mode === "agent"
+                              ? "bg-purple-500/20 text-purple-400"
+                              : "bg-amber-500/20 text-amber-400"
+                          }`}
+                        >
+                          {convo.mode === "agent" ? "AI" : "You"}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(convo.id); }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/20 flex-shrink-0"
+                          aria-label="Delete conversation"
+                          title="Delete from dashboard"
+                        >
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
