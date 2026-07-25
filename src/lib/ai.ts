@@ -69,5 +69,5 @@ export async function getAIResponse(
   }
 
   console.error(`[AI] All failed. Last: ${lastError}`);
-  return "";
+  return `AI Error: ${lastError.slice(0, 200)}`;
 }
