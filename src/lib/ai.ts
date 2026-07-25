@@ -8,6 +8,10 @@ function getOpenAI(): OpenAI {
     _openai = new OpenAI({
       baseURL: "https://openrouter.ai/api/v1",
       apiKey: process.env.OPENROUTER_API_KEY,
+      defaultHeaders: {
+        "HTTP-Referer": "https://github.com/abhi0fficialig-cmyk/IG-solar-chatbot",
+        "X-Title": "IG Solar Chatbot",
+      },
     });
   }
   return _openai;
@@ -52,15 +56,14 @@ export async function getAIResponse(
       console.log(`[AI] Model: ${model} | Response: ${content.slice(0, 100)}...`);
       return content;
     } catch (err: unknown) {
-      const e = err as { status?: number; message?: string };
-      lastError = `${model} failed: ${e.status || e.message}`;
+      const e = err as { status?: number; message?: string; code?: string };
+      lastError = `${model} > ${e.code || e.status || "error"}: ${e.message}`;
       console.warn(`[AI] ${lastError}`);
 
-      // If rate-limited, wait 1s before trying next model
       if (e.status === 429) await delay(1000);
     }
   }
 
   console.error(`[AI] All models failed. Last: ${lastError}`);
-  return "Sorry, I'm having trouble connecting right now. Please try again in a few minutes.";
+  return `Sorry, I'm having trouble connecting right now. (Error: ${lastError.slice(0, 100)})`;
 }
