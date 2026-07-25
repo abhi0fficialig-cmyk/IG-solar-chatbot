@@ -47,8 +47,8 @@ export async function getAIResponse(
         model,
         messages: payload,
         temperature: 0.7,
-        max_tokens: 500,
-      });
+        max_tokens: 150,
+      }, { timeout: 15000 });
 
       const content = completion.choices[0]?.message?.content?.trim();
       if (!content) continue;
