@@ -13,7 +13,7 @@ export async function GET() {
   // Fetch last message for each conversation
   const withLastMessage = await Promise.all(
     (conversations || []).map(async (convo) => {
-      const { data: messages } = await supabase
+      const { data: messages, error: msgError } = await supabase
         .from("instagram_messages")
         .select("content, role, created_at")
         .eq("conversation_id", convo.id)
@@ -22,7 +22,7 @@ export async function GET() {
 
       return {
         ...convo,
-        last_message: messages?.[0]?.content || null,
+        last_message: msgError ? null : (messages?.[0]?.content || null),
       };
     })
   );

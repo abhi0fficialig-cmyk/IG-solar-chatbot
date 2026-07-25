@@ -23,15 +23,27 @@ export default function Dashboard() {
   const selected = conversations.find((c) => c.id === selectedId);
 
   const fetchConversations = useCallback(async () => {
-    const res = await fetch("/api/conversations");
-    const data = await res.json();
-    setConversations(data);
+    try {
+      const res = await fetch("/api/conversations");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      setConversations(data);
+    } catch {
+      // Silently fail — conversations stay empty
+    }
   }, []);
 
   const fetchMessages = useCallback(async (convoId: string) => {
-    const res = await fetch(`/api/conversations/${convoId}/messages`);
-    const data = await res.json();
-    setMessages(data);
+    try {
+      const res = await fetch(`/api/conversations/${convoId}/messages`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      setMessages(data);
+    } catch {
+      // Silently fail
+    }
   }, []);
 
   useEffect(() => {
