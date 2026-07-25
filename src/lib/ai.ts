@@ -14,12 +14,17 @@ function getOpenAI(): OpenAI {
 }
 
 const FALLBACK_MODELS = [
-  process.env.AI_MODEL || "google/gemma-4-26b-a4b-it:free",
-  "google/gemma-4-26b-a4b-it:free",
+  process.env.AI_MODEL || "google/gemini-2.0-flash-exp:free",
   "google/gemini-2.0-flash-exp:free",
-  "mistralai/mistral-small-3.1-24b-instruct:free",
   "google/gemma-3-12b-it:free",
+  "mistralai/mistral-small-3.1-24b-instruct:free",
+  "microsoft/phi-3.5-mini-128k-instruct:free",
+  "meta-llama/llama-3.1-8b-instruct:free",
 ].filter(Boolean) as string[];
+
+function delay(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export async function getAIResponse(
   messages: { role: "user" | "assistant"; content: string }[]
@@ -31,7 +36,8 @@ export async function getAIResponse(
 
   let lastError = "";
 
-  for (const model of FALLBACK_MODELS) {
+  for (let i = 0; i < FALLBACK_MODELS.length; i++) {
+    const model = FALLBACK_MODELS[i];
     try {
       const completion = await getOpenAI().chat.completions.create({
         model,
@@ -49,10 +55,12 @@ export async function getAIResponse(
       const e = err as { status?: number; message?: string };
       lastError = `${model} failed: ${e.status || e.message}`;
       console.warn(`[AI] ${lastError}`);
-      if (e.status !== 429 && e.status !== 404) throw err;
+
+      // If rate-limited, wait 1s before trying next model
+      if (e.status === 429) await delay(1000);
     }
   }
 
   console.error(`[AI] All models failed. Last: ${lastError}`);
-  return "Sorry, I'm temporarily unavailable. Please try again shortly.";
+  return "Sorry, I'm having trouble connecting right now. Please try again in a few minutes.";
 }
