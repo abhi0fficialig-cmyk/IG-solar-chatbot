@@ -8,6 +8,8 @@ export async function GET() {
       ANON_KEY_SET: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       SERVICE_ROLE_KEY_SET: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
       INSTAGRAM_TOKEN_SET: !!process.env.INSTAGRAM_ACCESS_TOKEN,
+      GEMINI_KEY_SET: !!process.env.GEMINI_API_KEY,
+      AI_MODEL_SET: !!process.env.AI_MODEL,
       OPENROUTER_KEY_SET: !!process.env.OPENROUTER_API_KEY,
       VERIFY_TOKEN_SET: !!process.env.INSTAGRAM_VERIFY_TOKEN,
     },

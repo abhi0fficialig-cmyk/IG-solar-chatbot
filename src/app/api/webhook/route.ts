@@ -55,21 +55,35 @@ export async function POST(request: NextRequest) {
 
     if (!conversation) {
       // Fetch profile info on first message
-      const profile = await fetchInstagramProfile(igsid);
-      const { data: newConvo } = await supabase
-        .from("instagram_conversations")
-        .insert({ igsid, ...profile })
-        .select()
-        .single();
-      conversation = newConvo;
+      try {
+        const profile = await fetchInstagramProfile(igsid);
+        const { data: newConvo } = await supabase
+          .from("instagram_conversations")
+          .insert({ igsid, ...profile })
+          .select()
+          .single();
+        conversation = newConvo;
+      } catch {
+        // If Instagram API fails, create conversation without profile
+        const { data: newConvo } = await supabase
+          .from("instagram_conversations")
+          .insert({ igsid })
+          .select()
+          .single();
+        conversation = newConvo;
+      }
     } else {
-      // Refresh profile on every message to keep data up to date
-      const profile = await fetchInstagramProfile(igsid);
-      await supabase
-        .from("instagram_conversations")
-        .update(profile)
-        .eq("id", conversation.id);
-      conversation = { ...conversation, ...profile };
+      // Refresh profile on every message (don't block if it fails)
+      try {
+        const profile = await fetchInstagramProfile(igsid);
+        await supabase
+          .from("instagram_conversations")
+          .update(profile)
+          .eq("id", conversation.id);
+        conversation = { ...conversation, ...profile };
+      } catch {
+        // Profile refresh failed, continue with existing data
+      }
     }
 
     if (!conversation) {
