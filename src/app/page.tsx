@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const selected = conversations.find((c) => c.id === selectedId);
@@ -25,12 +26,19 @@ export default function Dashboard() {
   const fetchConversations = useCallback(async () => {
     try {
       const res = await fetch("/api/conversations");
-      if (!res.ok) return;
       const data = await res.json();
-      if (!Array.isArray(data)) return;
+      if (!res.ok) {
+        setError(`API error: ${data.error || res.statusText}`);
+        return;
+      }
+      if (!Array.isArray(data)) {
+        setError("Unexpected response from API");
+        return;
+      }
+      setError(null);
       setConversations(data);
-    } catch {
-      // Silently fail — conversations stay empty
+    } catch (e: unknown) {
+      setError(`Network error: ${(e as Error).message}`);
     }
   }, []);
 
@@ -163,6 +171,13 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Error Banner */}
+        {error && (
+          <div className="px-4 py-2.5 bg-red-500/10 border-b border-red-500/20">
+            <p className="text-[11px] text-red-400 leading-tight">{error}</p>
+          </div>
+        )}
 
         {/* Conversation List */}
         <div className="flex-1 overflow-y-auto">
