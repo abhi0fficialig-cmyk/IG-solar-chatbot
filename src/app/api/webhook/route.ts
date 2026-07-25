@@ -108,13 +108,20 @@ export async function POST(request: NextRequest) {
       .order("created_at", { ascending: true })
       .limit(20);
 
+    // Build message list — include current text explicitly to avoid DB read lag
+    const previousMessages = (history || []).map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+
+    // If the last message in history doesn't match the current text, append it
+    const lastMsg = previousMessages[previousMessages.length - 1];
+    if (!lastMsg || lastMsg.content !== text) {
+      previousMessages.push({ role: "user" as const, content: text });
+    }
+
     // Get AI response
-    const aiResponse = await getAIResponse(
-      (history || []).map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      }))
-    );
+    const aiResponse = await getAIResponse(previousMessages);
 
     // Send response via Instagram
     await sendInstagramMessage(igsid, aiResponse);
