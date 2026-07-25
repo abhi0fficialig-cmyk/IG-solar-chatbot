@@ -42,7 +42,7 @@ export async function getAIResponse(
         messages: payload,
         temperature: 0.7,
         max_tokens: 150,
-      }, { timeout: 15000 });
+      }, { timeout: 8000 });
 
       const content = completion.choices[0]?.message?.content?.trim();
       if (!content) continue;
@@ -57,5 +57,5 @@ export async function getAIResponse(
   }
 
   console.error(`[AI] All failed. Last: ${lastError}`);
-  return `Sorry, I'm having trouble. (${lastError.slice(0, 120)})`;
+  return "";
 }

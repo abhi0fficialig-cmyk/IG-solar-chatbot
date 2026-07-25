@@ -123,6 +123,11 @@ export async function POST(request: NextRequest) {
     // Get AI response
     const aiResponse = await getAIResponse(previousMessages);
 
+    // If AI failed, don't send anything to the user
+    if (!aiResponse || aiResponse.startsWith("Sorry,")) {
+      return Response.json({ status: "ai_unavailable" });
+    }
+
     // Send response via Instagram
     await sendInstagramMessage(igsid, aiResponse);
 
