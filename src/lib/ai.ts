@@ -1,24 +1,43 @@
-import OpenAI from "openai";
 import { INSTAGRAM_SYSTEM_PROMPT } from "@/lib/system-prompt";
 
-let _openai: OpenAI | null = null;
+const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY || "";
 
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    _openai = new OpenAI({
-      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-      apiKey: process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY,
-    });
-  }
-  return _openai;
-}
-
-const FALLBACK_MODELS = [
+const MODELS = [
   process.env.AI_MODEL || "gemini-2.0-flash",
   "gemini-2.0-flash",
   "gemini-2.0-flash-lite",
   "gemini-1.5-flash",
-].filter(Boolean) as string[];
+];
+
+function buildGeminiPayload(messages: { role: string; content: string }[]) {
+  const contents = [] as { role: string; parts: { text: string }[] }[];
+  let systemInstruction = "";
+
+  for (const msg of messages) {
+    if (msg.role === "system") {
+      systemInstruction = msg.content;
+    } else {
+      contents.push({
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content }],
+      });
+    }
+  }
+
+  const body: Record<string, unknown> = {
+    contents,
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 150,
+    },
+  };
+
+  if (systemInstruction) {
+    body.systemInstruction = { parts: [{ text: systemInstruction }] };
+  }
+
+  return body;
+}
 
 export async function getAIResponse(
   messages: { role: "user" | "assistant"; content: string }[]
@@ -30,28 +49,39 @@ export async function getAIResponse(
 
   let lastError = "";
 
-  for (let i = 0; i < FALLBACK_MODELS.length; i++) {
-    const model = FALLBACK_MODELS[i];
+  for (const model of MODELS) {
     try {
-      const completion = await getOpenAI().chat.completions.create({
-        model,
-        messages: payload,
-        temperature: 0.7,
-        max_tokens: 150,
-      }, { timeout: 15000 });
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`;
 
-      const content = completion.choices[0]?.message?.content?.trim();
-      if (!content) continue;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildGeminiPayload(payload)),
+        signal: AbortSignal.timeout(15000),
+      });
 
-      console.log(`[AI] Model: ${model} | Response: ${content.slice(0, 100)}...`);
-      return content;
+      const data = await res.json();
+
+      if (!res.ok) {
+        lastError = `${model} > ${res.status}: ${data.error?.message || JSON.stringify(data).slice(0, 100)}`;
+        console.warn(`[AI] ${lastError}`);
+        continue;
+      }
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (text) {
+        console.log(`[AI] Model: ${model} | Response: ${text.slice(0, 100)}...`);
+        return text;
+      }
+
+      lastError = `${model} > empty response`;
     } catch (err: unknown) {
-      const e = err as { status?: number; message?: string; code?: string };
-      lastError = `${model} > ${e.code || e.status || "error"}: ${e.message}`;
+      const e = err as { name?: string; message?: string };
+      lastError = `${model} > ${e.name || "error"}: ${e.message}`;
       console.warn(`[AI] ${lastError}`);
     }
   }
 
   console.error(`[AI] All models failed. Last: ${lastError}`);
-  return "Sorry, I'm having trouble connecting right now. Please try again.";
+  return `Sorry, I'm having trouble. (${lastError.slice(0, 120)})`;
 }
