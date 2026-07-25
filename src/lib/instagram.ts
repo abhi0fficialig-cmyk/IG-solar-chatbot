@@ -7,6 +7,12 @@ export interface InstagramProfile {
   is_business_follow_user: boolean | null;
 }
 
+class InstagramAPIError extends Error {
+  constructor(public status: number, public body: unknown) {
+    super(`Instagram API error: ${status}`);
+  }
+}
+
 export async function fetchInstagramProfile(igsid: string): Promise<InstagramProfile> {
   const url = new URL(`https://graph.instagram.com/v24.0/${igsid}`);
   url.searchParams.set("fields", "name,username,profile_pic,follower_count,is_user_follow_business,is_business_follow_user");
@@ -14,6 +20,8 @@ export async function fetchInstagramProfile(igsid: string): Promise<InstagramPro
 
   const res = await fetch(url.toString());
   const data = await res.json();
+
+  if (!res.ok) throw new InstagramAPIError(res.status, data);
 
   return {
     name: data.name ?? null,
@@ -37,5 +45,8 @@ export async function sendInstagramMessage(recipientIgsid: string, text: string)
       message: { text },
     }),
   });
-  return res.json();
+
+  const data = await res.json();
+  if (!res.ok) throw new InstagramAPIError(res.status, data);
+  return data;
 }
