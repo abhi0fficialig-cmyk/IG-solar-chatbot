@@ -18,8 +18,8 @@ function getOpenAI(): OpenAI {
 }
 
 const FALLBACK_MODELS = [
-  process.env.AI_MODEL || "openai/gpt-oss-20b:free",
-  "openai/gpt-oss-20b:free",
+  process.env.AI_MODEL || "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   "google/gemini-2.0-flash-exp:free",
   "google/gemma-3-12b-it:free",
   "mistralai/mistral-small-3.1-24b-instruct:free",
