@@ -17,12 +17,20 @@ function getOpenAI(): OpenAI {
   return _openai;
 }
 
+function delay(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 const FALLBACK_MODELS = [
   process.env.AI_MODEL || "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   "google/gemini-2.0-flash-exp:free",
   "google/gemma-3-12b-it:free",
   "mistralai/mistral-small-3.1-24b-instruct:free",
+  "meta-llama/llama-3.1-8b-instruct:free",
+  "microsoft/phi-3.5-mini-128k-instruct:free",
+  "qwen/qwen-2.5-7b-instruct:free",
+  "openrouter/auto",
 ].filter(Boolean) as string[];
 
 export async function getAIResponse(
@@ -35,14 +43,15 @@ export async function getAIResponse(
 
   let lastError = "";
 
-  for (const model of FALLBACK_MODELS) {
+  for (let i = 0; i < FALLBACK_MODELS.length; i++) {
+    const model = FALLBACK_MODELS[i];
     try {
       const completion = await getOpenAI().chat.completions.create({
         model,
         messages: payload,
         temperature: 0.7,
         max_tokens: 150,
-      }, { timeout: 8000 });
+      }, { timeout: 10000 });
 
       const content = completion.choices[0]?.message?.content?.trim();
       if (!content) continue;
@@ -53,6 +62,9 @@ export async function getAIResponse(
       const e = err as { status?: number; message?: string };
       lastError = `${model} > ${e.status || "error"}: ${e.message}`;
       console.warn(`[AI] ${lastError}`);
+
+      // Wait 500ms before trying next model to avoid rate limits
+      await delay(500);
     }
   }
 

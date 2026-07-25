@@ -121,14 +121,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Get AI response
-    const aiResponse = await getAIResponse(previousMessages);
+    let aiResponse = await getAIResponse(previousMessages);
 
-    // If AI failed, don't send anything to the user
-    if (!aiResponse || aiResponse.startsWith("Sorry,")) {
-      return Response.json({ status: "ai_unavailable" });
+    // If AI failed, use a fallback message
+    if (!aiResponse) {
+      aiResponse = "Thanks for reaching out! I'll have our team contact you shortly. You can also call us on +91 91516 81598.";
     }
 
     // Send response via Instagram
+    await sendInstagramMessage(igsid, aiResponse);
     await sendInstagramMessage(igsid, aiResponse);
 
     // Store AI response
