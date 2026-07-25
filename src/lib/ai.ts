@@ -14,11 +14,11 @@ function getOpenAI(): OpenAI {
 }
 
 const FALLBACK_MODELS = [
-  process.env.AI_MODEL,
+  process.env.AI_MODEL || "google/gemma-4-26b-a4b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
   "google/gemini-2.0-flash-exp:free",
   "mistralai/mistral-small-3.1-24b-instruct:free",
   "google/gemma-3-12b-it:free",
-  "microsoft/phi-3.5-mini-128k-instruct:free",
 ].filter(Boolean) as string[];
 
 export async function getAIResponse(
