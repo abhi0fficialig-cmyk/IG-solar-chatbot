@@ -22,29 +22,15 @@ function delay(ms: number) {
 }
 
 const FALLBACK_MODELS = [
-  process.env.AI_MODEL || "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+  process.env.AI_MODEL || "google/gemini-2.0-flash-exp:free",
   "google/gemini-2.0-flash-exp:free",
   "google/gemma-3-12b-it:free",
   "mistralai/mistral-small-3.1-24b-instruct:free",
   "meta-llama/llama-3.1-8b-instruct:free",
-  "microsoft/phi-3.5-mini-128k-instruct:free",
-  "qwen/qwen-2.5-7b-instruct:free",
-  "openrouter/auto",
 ].filter(Boolean) as string[];
 
-export async function getAIResponse(
-  messages: { role: "user" | "assistant"; content: string }[]
-) {
-  const payload = [
-    { role: "system" as const, content: INSTAGRAM_SYSTEM_PROMPT },
-    ...messages,
-  ];
-
-  let lastError = "";
-
-  for (let i = 0; i < FALLBACK_MODELS.length; i++) {
-    const model = FALLBACK_MODELS[i];
+async function tryModel(model: string, payload: { role: string; content: string }[]): Promise<string | null> {
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const completion = await getOpenAI().chat.completions.create({
         model,
@@ -54,20 +40,41 @@ export async function getAIResponse(
       }, { timeout: 10000 });
 
       const content = completion.choices[0]?.message?.content?.trim();
-      if (!content) continue;
-
-      console.log(`[AI] Model: ${model} | OK`);
-      return content;
+      if (content) return content;
+      return null;
     } catch (err: unknown) {
       const e = err as { status?: number; message?: string };
-      lastError = `${model} > ${e.status || "error"}: ${e.message}`;
-      console.warn(`[AI] ${lastError}`);
-
-      // Wait 500ms before trying next model to avoid rate limits
-      await delay(500);
+      // If rate limited, wait 3s and retry the same model
+      if (e.status === 429) {
+        console.warn(`[AI] ${model} rate limited (attempt ${attempt + 1}/3), waiting 3s...`);
+        await delay(3000);
+        continue;
+      }
+      // Any other error, skip this model
+      console.warn(`[AI] ${model} > ${e.status || "error"}: ${e.message}`);
+      return null;
     }
   }
+  console.warn(`[AI] ${model} rate limited after 3 attempts`);
+  return null;
+}
 
-  console.error(`[AI] All failed. Last: ${lastError}`);
-  return `AI Error: ${lastError.slice(0, 200)}`;
+export async function getAIResponse(
+  messages: { role: "user" | "assistant"; content: string }[]
+) {
+  const payload = [
+    { role: "system" as const, content: INSTAGRAM_SYSTEM_PROMPT },
+    ...messages,
+  ];
+
+  for (const model of FALLBACK_MODELS) {
+    const result = await tryModel(model, payload);
+    if (result) {
+      console.log(`[AI] ${model} | OK`);
+      return result;
+    }
+    await delay(500);
+  }
+
+  return "Thanks for reaching out! Our team will contact you shortly. You can also call us on +91 91516 81598.";
 }
