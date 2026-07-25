@@ -6,29 +6,19 @@ let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
   if (!_openai) {
     _openai = new OpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
-      apiKey: process.env.OPENROUTER_API_KEY,
-      defaultHeaders: {
-        "HTTP-Referer": "https://github.com/abhi0fficialig-cmyk/IG-solar-chatbot",
-        "X-Title": "IG Solar Chatbot",
-      },
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+      apiKey: process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY,
     });
   }
   return _openai;
 }
 
 const FALLBACK_MODELS = [
-  process.env.AI_MODEL || "openrouter/free",
-  "openrouter/free",
-  "google/gemini-2.0-flash-exp:free",
-  "google/gemma-3-12b-it:free",
-  "mistralai/mistral-small-3.1-24b-instruct:free",
-  "meta-llama/llama-3.1-8b-instruct:free",
+  process.env.AI_MODEL || "gemini-2.0-flash",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-1.5-flash",
 ].filter(Boolean) as string[];
-
-function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
 
 export async function getAIResponse(
   messages: { role: "user" | "assistant"; content: string }[]
@@ -59,11 +49,9 @@ export async function getAIResponse(
       const e = err as { status?: number; message?: string; code?: string };
       lastError = `${model} > ${e.code || e.status || "error"}: ${e.message}`;
       console.warn(`[AI] ${lastError}`);
-
-      if (e.status === 429) await delay(1000);
     }
   }
 
   console.error(`[AI] All models failed. Last: ${lastError}`);
-  return `Sorry, I'm having trouble connecting right now. (Error: ${lastError.slice(0, 100)})`;
+  return "Sorry, I'm having trouble connecting right now. Please try again.";
 }
