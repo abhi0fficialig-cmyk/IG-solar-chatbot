@@ -36,18 +36,35 @@ CREATE INDEX IF NOT EXISTS idx_messages_conversation ON public.instagram_message
 CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_instagram_msg_id ON public.instagram_messages (instagram_msg_id) WHERE instagram_msg_id IS NOT NULL;
 
 -- ─────────────────────────────────────────────
--- 3. Enable Realtime (so dashboard updates live)
+-- 3. Enable Realtime (safe to re-run)
 -- ─────────────────────────────────────────────
-ALTER PUBLICATION supabase_realtime ADD TABLE public.instagram_conversations;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.instagram_messages;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+    AND schemaname = 'public'
+    AND tablename = 'instagram_conversations'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.instagram_conversations;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+    AND schemaname = 'public'
+    AND tablename = 'instagram_messages'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.instagram_messages;
+  END IF;
+END $$;
 
 -- ─────────────────────────────────────────────
--- 4. Row Level Security (open for now)
+-- 4. Row Level Security (safe to re-run)
 -- ─────────────────────────────────────────────
-ALTER TABLE public.instagram_conversations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.instagram_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF NOT EXISTS public.instagram_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF NOT EXISTS public.instagram_messages ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if re-running
 DROP POLICY IF EXISTS "Allow all on conversations" ON public.instagram_conversations;
 DROP POLICY IF EXISTS "Allow all on messages" ON public.instagram_messages;
 
