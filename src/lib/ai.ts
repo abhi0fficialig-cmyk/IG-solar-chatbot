@@ -1,61 +1,63 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { INSTAGRAM_SYSTEM_PROMPT } from "@/lib/system-prompt";
 
-let _openai: OpenAI | null = null;
+let _genAI: GoogleGenerativeAI | null = null;
 
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    _openai = new OpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
-      apiKey: process.env.OPENROUTER_API_KEY,
-      defaultHeaders: {
-        "HTTP-Referer": "https://github.com/abhi0fficialig-cmyk/IG-solar-chatbot",
-        "X-Title": "IG Solar Chatbot",
-      },
-    });
+function getGenAI(): GoogleGenerativeAI {
+  if (!_genAI) {
+    _genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY || "");
   }
-  return _openai;
+  return _genAI;
 }
 
-function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
+const MODELS = [
+  process.env.AI_MODEL || "gemini-2.0-flash",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-1.5-flash",
+];
 
-const FALLBACK_MODELS = [
-  process.env.AI_MODEL || "google/gemini-2.0-flash-exp:free",
-  "google/gemini-2.0-flash-exp:free",
-  "google/gemma-3-12b-it:free",
-  "mistralai/mistral-small-3.1-24b-instruct:free",
-  "meta-llama/llama-3.1-8b-instruct:free",
-].filter(Boolean) as string[];
+async function tryModel(modelName: string, payload: { role: string; content: string }[]): Promise<string | null> {
+  const systemMsg = payload.find((m) => m.role === "system")?.content || "";
+  const history = payload.filter((m) => m.role !== "system");
+  const lastMsg = history.pop();
 
-async function tryModel(model: string, payload: { role: string; content: string }[]): Promise<string | null> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  if (!lastMsg) return null;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const completion = await getOpenAI().chat.completions.create({
-        model,
-        messages: payload,
-        temperature: 0.7,
-        max_tokens: 150,
-      }, { timeout: 10000 });
+      const model = getGenAI().getGenerativeModel({
+        model: modelName,
+        systemInstruction: systemMsg,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 150,
+        },
+      });
 
-      const content = completion.choices[0]?.message?.content?.trim();
-      if (content) return content;
+      const chat = model.startChat({
+        history: history.map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        })),
+      });
+
+      const result = await chat.sendMessage(lastMsg.content);
+      const text = result.response.text().trim();
+      if (text) return text;
       return null;
     } catch (err: unknown) {
-      const e = err as { status?: number; message?: string };
-      // If rate limited, wait 3s and retry the same model
-      if (e.status === 429) {
-        console.warn(`[AI] ${model} rate limited (attempt ${attempt + 1}/3), waiting 3s...`);
-        await delay(3000);
+      const e = err as { status?: number; message?: string; code?: number };
+      // Retry once on rate limit after 3s
+      if (e.status === 429 || e.code === 429) {
+        console.warn(`[AI] ${modelName} rate limited, retrying in 3s...`);
+        await new Promise((r) => setTimeout(r, 3000));
         continue;
       }
-      // Any other error, skip this model
-      console.warn(`[AI] ${model} > ${e.status || "error"}: ${e.message}`);
+      console.warn(`[AI] ${modelName} > ${e.status || e.code || "error"}: ${e.message}`);
       return null;
     }
   }
-  console.warn(`[AI] ${model} rate limited after 3 attempts`);
   return null;
 }
 
@@ -67,13 +69,12 @@ export async function getAIResponse(
     ...messages,
   ];
 
-  for (const model of FALLBACK_MODELS) {
+  for (const model of MODELS) {
     const result = await tryModel(model, payload);
     if (result) {
       console.log(`[AI] ${model} | OK`);
       return result;
     }
-    await delay(500);
   }
 
   return "Thanks for reaching out! Our team will contact you shortly. You can also call us on +91 91516 81598.";
