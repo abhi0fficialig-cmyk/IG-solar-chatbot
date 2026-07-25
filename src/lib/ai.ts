@@ -18,11 +18,11 @@ function getOpenAI(): OpenAI {
 }
 
 const FALLBACK_MODELS = [
-  process.env.AI_MODEL || "google/gemini-2.0-flash-exp:free",
+  process.env.AI_MODEL || "openrouter/free",
+  "openrouter/free",
   "google/gemini-2.0-flash-exp:free",
   "google/gemma-3-12b-it:free",
   "mistralai/mistral-small-3.1-24b-instruct:free",
-  "microsoft/phi-3.5-mini-128k-instruct:free",
   "meta-llama/llama-3.1-8b-instruct:free",
 ].filter(Boolean) as string[];
 
