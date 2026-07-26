@@ -171,7 +171,7 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-[#0f0f0f] font-sans">
       {/* Sidebar — full width on mobile, fixed 320px on desktop */}
-      <div className={`w-full md:w-[320px] flex flex-col border-r border-white/[0.06] ${selectedId ? "hidden md:flex" : "flex"}`} style={{ background: "#141414" }}>
+      <div className={`w-full md:w-[320px] flex flex-col border-r border-white/[0.06] ${selectedId ? "max-md:hidden" : ""}`} style={{ background: "#141414" }}>
         {/* Sidebar Header */}
         <div className="px-5 py-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
@@ -274,7 +274,7 @@ export default function Dashboard() {
       </div>
 
       {/* Chat Panel — hidden on mobile when no selection, full-screen when selected */}
-      <div className={`flex-1 flex flex-col min-w-0 ${!selectedId ? "hidden md:flex" : "flex"}`}>
+      <div className={`flex-1 flex flex-col min-w-0 ${!selectedId ? "max-md:hidden" : ""}`}>
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
