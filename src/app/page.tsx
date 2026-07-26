@@ -169,8 +169,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-[#0f0f0f] font-sans">
-      {/* Sidebar — full width on mobile, fixed 320px on desktop */}
+    <div className="h-screen bg-[#0f0f0f] font-sans flex justify-center">
+      <div className="flex w-full max-w-[1400px]">
+        {/* Sidebar — full width on mobile, fixed 320px on desktop */}
       <div className={`w-full md:w-[320px] flex flex-col border-r border-white/[0.06] ${selectedId ? "max-md:hidden" : ""}`} style={{ background: "#141414" }}>
         {/* Sidebar Header */}
         <div className="px-5 py-4 border-b border-white/[0.06]">
@@ -412,6 +413,7 @@ export default function Dashboard() {
             </div>
           </>
         )}
+        </div>
       </div>
     </div>
   );
