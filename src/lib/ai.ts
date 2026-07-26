@@ -1,20 +1,23 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 import { INSTAGRAM_SYSTEM_PROMPT } from "@/lib/system-prompt";
 
-let _genAI: GoogleGenerativeAI | null = null;
+let _client: OpenAI | null = null;
 
-function getGenAI(): GoogleGenerativeAI {
-  if (!_genAI) {
-    _genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY || "");
+function getClient(): OpenAI {
+  if (!_client) {
+    _client = new OpenAI({
+      apiKey: process.env.OPENROUTER_API_KEY || "",
+      baseURL: "https://openrouter.ai/api/v1",
+    });
   }
-  return _genAI;
+  return _client;
 }
 
 const MODELS = [
-  process.env.AI_MODEL || "gemini-2.0-flash",
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
+  process.env.AI_MODEL || "openai/gpt-oss-20b:free",
+  "openai/gpt-oss-20b:free",
+  "google/gemini-2.0-flash-001:free",
+  "meta-llama/llama-3.1-8b-instruct:free",
 ];
 
 async function tryModel(modelName: string, payload: { role: string; content: string }[]): Promise<string | null> {
@@ -26,29 +29,22 @@ async function tryModel(modelName: string, payload: { role: string; content: str
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const model = getGenAI().getGenerativeModel({
+      const result = await getClient().chat.completions.create({
         model: modelName,
-        systemInstruction: systemMsg,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 150,
-        },
+        messages: [
+          { role: "system", content: systemMsg },
+          ...history.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+          { role: lastMsg.role as "user", content: lastMsg.content },
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
       });
 
-      const chat = model.startChat({
-        history: history.map((m) => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: m.content }],
-        })),
-      });
-
-      const result = await chat.sendMessage(lastMsg.content);
-      const text = result.response.text().trim();
+      const text = result.choices?.[0]?.message?.content?.trim();
       if (text) return text;
       return null;
     } catch (err: unknown) {
       const e = err as { status?: number; message?: string; code?: number };
-      // Retry once on rate limit after 3s
       if (e.status === 429 || e.code === 429) {
         console.warn(`[AI] ${modelName} rate limited, retrying in 3s...`);
         await new Promise((r) => setTimeout(r, 3000));
