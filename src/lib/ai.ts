@@ -8,17 +8,11 @@ function getClient(): OpenAI {
     _client = new OpenAI({
       apiKey: process.env.OPENROUTER_API_KEY || "",
       baseURL: "https://openrouter.ai/api/v1",
+      timeout: 10000,
     });
   }
   return _client;
 }
-
-const MODELS = [
-  process.env.AI_MODEL || "openai/gpt-oss-20b:free",
-  "openai/gpt-oss-20b:free",
-  "google/gemini-2.0-flash-001:free",
-  "meta-llama/llama-3.1-8b-instruct:free",
-];
 
 async function tryModel(modelName: string, payload: { role: string; content: string }[]): Promise<string | null> {
   const systemMsg = payload.find((m) => m.role === "system")?.content || "";
@@ -46,8 +40,7 @@ async function tryModel(modelName: string, payload: { role: string; content: str
     } catch (err: unknown) {
       const e = err as { status?: number; message?: string; code?: number };
       if (e.status === 429 || e.code === 429) {
-        console.warn(`[AI] ${modelName} rate limited, retrying in 3s...`);
-        await new Promise((r) => setTimeout(r, 3000));
+        console.warn(`[AI] ${modelName} rate limited, retrying...`);
         continue;
       }
       console.warn(`[AI] ${modelName} > ${e.status || e.code || "error"}: ${e.message}`);
@@ -60,18 +53,15 @@ async function tryModel(modelName: string, payload: { role: string; content: str
 export async function getAIResponse(
   messages: { role: "user" | "assistant"; content: string }[]
 ) {
+  const modelName = process.env.AI_MODEL || "openai/gpt-oss-20b:free";
+
   const payload = [
     { role: "system" as const, content: INSTAGRAM_SYSTEM_PROMPT },
     ...messages,
   ];
 
-  for (const model of MODELS) {
-    const result = await tryModel(model, payload);
-    if (result) {
-      console.log(`[AI] ${model} | OK`);
-      return result;
-    }
-  }
+  const result = await tryModel(modelName, payload);
+  if (result) return result;
 
   return "Thanks for reaching out! Our team will contact you shortly. You can also call us on +91 91516 81598.";
 }

@@ -137,8 +137,12 @@ export async function POST(request: NextRequest) {
     // Get AI response
     const aiResponse = await getAIResponse(previousMessages);
 
-    // Send response via Instagram
-    await sendInstagramMessage(igsid, aiResponse);
+    // Send response via Instagram (don't block if it fails)
+    try {
+      await sendInstagramMessage(igsid, aiResponse);
+    } catch (e) {
+      console.error("Failed to send Instagram message:", e);
+    }
 
     // Store AI response
     await supabase.from("instagram_messages").insert({

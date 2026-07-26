@@ -1,5 +1,20 @@
 import { supabase } from "@/lib/supabase";
 
+async function testInstagramToken(): Promise<string> {
+  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+  if (!token) return "MISSING_TOKEN";
+  try {
+    const res = await fetch(
+      `https://graph.instagram.com/v24.0/me?fields=id,username&access_token=${token}`
+    );
+    const data = await res.json();
+    if (!res.ok) return `FAILED: ${data.error?.message || res.status}`;
+    return `OK (${data.username})`;
+  } catch {
+    return "NETWORK_ERROR";
+  }
+}
+
 export async function GET() {
   const diagnostics: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
@@ -42,6 +57,8 @@ export async function GET() {
   } catch (e: unknown) {
     diagnostics.messages = { error: (e as Error).message };
   }
+
+  diagnostics.instagram_token_test = await testInstagramToken();
 
   return Response.json(diagnostics, { status: 200 });
 }
