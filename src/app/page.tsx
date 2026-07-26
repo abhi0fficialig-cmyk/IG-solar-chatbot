@@ -170,8 +170,8 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-[#0f0f0f] font-sans">
-      {/* Sidebar */}
-      <div className="w-[320px] flex flex-col border-r border-white/[0.06]" style={{ background: "#141414" }}>
+      {/* Sidebar — full width on mobile, fixed 320px on desktop */}
+      <div className={`w-full md:w-[320px] flex flex-col border-r border-white/[0.06] ${selectedId ? "hidden md:flex" : "flex"}`} style={{ background: "#141414" }}>
         {/* Sidebar Header */}
         <div className="px-5 py-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
@@ -273,8 +273,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Chat Panel */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Chat Panel — hidden on mobile when no selection, full-screen when selected */}
+      <div className={`flex-1 flex flex-col min-w-0 ${!selectedId ? "hidden md:flex" : "flex"}`}>
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
@@ -290,8 +290,13 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Chat Header */}
-            <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between" style={{ background: "#141414" }}>
+            <div className="px-4 md:px-6 py-4 border-b border-white/[0.06] flex items-center justify-between" style={{ background: "#141414" }}>
               <div className="flex items-center gap-4">
+                <button onClick={() => setSelectedId(null)} className="md:hidden p-1 -ml-1 rounded-lg hover:bg-white/[0.06] transition-colors" aria-label="Back to conversations">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                </button>
                 <Avatar src={selected.profile_pic} name={selected.name} igsid={selected.igsid} size={44} />
                 <div>
                   <div className="flex items-center gap-2">
@@ -336,7 +341,7 @@ export default function Dashboard() {
 
             {/* Messages */}
             <div
-              className="flex-1 overflow-y-auto px-6 py-5 space-y-4"
+              className="flex-1 overflow-y-auto px-4 md:px-6 py-5 space-y-4"
               style={{
                 backgroundImage:
                   "radial-gradient(circle at 20% 80%, rgba(131,58,180,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(253,29,29,0.03) 0%, transparent 50%)",
@@ -375,7 +380,7 @@ export default function Dashboard() {
             </div>
 
             {/* Input Bar */}
-            <div className="px-6 py-4 border-t border-white/[0.06]" style={{ background: "#141414" }}>
+            <div className="px-4 md:px-6 py-4 border-t border-white/[0.06]" style={{ background: "#141414" }}>
               <div className="flex items-center gap-3 bg-white/[0.06] rounded-xl px-4 py-2.5 border border-white/[0.06] focus-within:border-purple-500/40 transition-colors">
                 <input
                   type="text"
