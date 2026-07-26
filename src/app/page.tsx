@@ -162,23 +162,23 @@ export default function Dashboard() {
       );
     }
     return (
-      <div className={cls} style={{ ...style, background: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)" }}>
+      <div className={cls} style={{ ...style, background: "linear-gradient(135deg, #d97706, #ea580c)" }}>
         {getInitials(name, igsid)}
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-[#0f0f0f] font-sans flex justify-center">
+    <div className="h-screen bg-[#08080a] font-sans flex justify-center">
       <div className="flex w-full max-w-[1400px]">
         {/* Sidebar — full width on mobile, fixed 320px on desktop */}
-      <div className={`w-full md:w-[320px] flex flex-col border-r border-white/[0.06] ${selectedId ? "max-md:hidden" : ""}`} style={{ background: "#141414" }}>
+      <div className={`w-full md:w-[320px] flex flex-col border-r border-white/[0.04] ${selectedId ? "max-md:hidden" : ""}`} style={{ background: "#0d0d10" }}>
         {/* Sidebar Header */}
-        <div className="px-5 py-4 border-b border-white/[0.06]">
+        <div className="px-5 py-4 border-b border-white/[0.04]">
           <div className="flex items-center gap-3">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)" }}
+              style={{ background: "linear-gradient(135deg, #d97706, #ea580c)" }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -219,13 +219,13 @@ export default function Dashboard() {
                 key={convo.id}
                 onClick={() => setSelectedId(convo.id)}
                 className={`w-full text-left px-4 py-3.5 transition-all duration-150 relative group ${
-                  isSelected ? "bg-white/[0.07]" : "hover:bg-white/[0.04]"
+                  isSelected ? "bg-amber-500/[0.06]" : "hover:bg-white/[0.03]"
                 }`}
               >
                 {isSelected && (
                   <div
                     className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-r"
-                    style={{ background: "linear-gradient(to bottom, #833ab4, #fd1d1d)" }}
+                    style={{ background: "linear-gradient(to bottom, #d97706, #ea580c)" }}
                   />
                 )}
                 <div className="flex items-center gap-3">
@@ -247,8 +247,8 @@ export default function Dashboard() {
                         <span
                           className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 uppercase tracking-wide ${
                             convo.mode === "agent"
-                              ? "bg-purple-500/20 text-purple-400"
-                              : "bg-amber-500/20 text-amber-400"
+                              ? "bg-amber-500/20 text-amber-400"
+                              : "bg-emerald-500/20 text-emerald-400"
                           }`}
                         >
                           {convo.mode === "agent" ? "AI" : "You"}
@@ -291,7 +291,7 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Chat Header */}
-            <div className="px-4 md:px-6 py-4 border-b border-white/[0.06] flex items-center justify-between" style={{ background: "#141414" }}>
+            <div className="px-4 md:px-6 py-4 border-b border-white/[0.04] flex items-center justify-between" style={{ background: "#0d0d10" }}>
               <div className="flex items-center gap-4">
                 <button onClick={() => setSelectedId(null)} className="md:hidden p-1 -ml-1 rounded-lg hover:bg-white/[0.06] transition-colors" aria-label="Back to conversations">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -315,12 +315,12 @@ export default function Dashboard() {
                       </span>
                     )}
                     {selected.is_user_follow_business !== null && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${selected.is_user_follow_business ? "bg-purple-500/15 text-purple-400" : "bg-white/5 text-white/30"}`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${selected.is_user_follow_business ? "bg-amber-500/15 text-amber-400" : "bg-white/5 text-white/30"}`}>
                         {selected.is_user_follow_business ? "Follows you" : "Doesn't follow"}
                       </span>
                     )}
                     {selected.is_business_follow_user !== null && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${selected.is_business_follow_user ? "bg-pink-500/15 text-pink-400" : "bg-white/5 text-white/30"}`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${selected.is_business_follow_user ? "bg-emerald-500/15 text-emerald-400" : "bg-white/5 text-white/30"}`}>
                         {selected.is_business_follow_user ? "You follow" : "You don't follow"}
                       </span>
                     )}
@@ -331,11 +331,11 @@ export default function Dashboard() {
                 onClick={toggleMode}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                   selected.mode === "agent"
-                    ? "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border border-purple-500/20"
-                    : "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/20"
+                    ? "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/20"
+                    : "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20"
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${selected.mode === "agent" ? "bg-purple-400" : "bg-amber-400"}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${selected.mode === "agent" ? "bg-amber-400" : "bg-emerald-400"}`} />
                 {selected.mode === "agent" ? "AI Mode" : "Human Mode"}
               </button>
             </div>
@@ -345,7 +345,7 @@ export default function Dashboard() {
               className="flex-1 overflow-y-auto px-4 md:px-6 py-5 space-y-4"
               style={{
                 backgroundImage:
-                  "radial-gradient(circle at 20% 80%, rgba(131,58,180,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(253,29,29,0.03) 0%, transparent 50%)",
+                  "radial-gradient(circle at 20% 80%, rgba(217,119,6,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(234,88,12,0.03) 0%, transparent 50%)",
               }}
             >
               {messages.map((msg, i) => {
@@ -363,13 +363,13 @@ export default function Dashboard() {
                             ? "bg-white/[0.07] text-white/90 rounded-tl-sm border border-white/[0.06]"
                             : "text-white rounded-tr-sm"
                         }`}
-                        style={!isUser ? { background: "linear-gradient(135deg, #833ab4, #fd1d1d)" } : {}}
+                        style={!isUser ? { background: "linear-gradient(135deg, #d97706, #ea580c)" } : {}}
                       >
                         <p className="whitespace-pre-wrap">{msg.content}</p>
                       </div>
                       {showTime && (
                         <p className="text-[10px] text-white/25 mt-1.5 px-1">
-                          {!isUser && <span className="text-purple-400/60 mr-1">AI ·</span>}
+                          {!isUser && <span className="text-amber-400/60 mr-1">AI ·</span>}
                           {formatTime(msg.created_at)}
                         </p>
                       )}
@@ -381,8 +381,8 @@ export default function Dashboard() {
             </div>
 
             {/* Input Bar */}
-            <div className="px-4 md:px-6 py-4 border-t border-white/[0.06]" style={{ background: "#141414" }}>
-              <div className="flex items-center gap-3 bg-white/[0.06] rounded-xl px-4 py-2.5 border border-white/[0.06] focus-within:border-purple-500/40 transition-colors">
+            <div className="px-4 md:px-6 py-4 border-t border-white/[0.04]" style={{ background: "#0d0d10" }}>
+              <div className="flex items-center gap-3 bg-white/[0.04] rounded-xl px-4 py-2.5 border border-white/[0.06] focus-within:border-amber-500/40 transition-colors">
                 <input
                   type="text"
                   value={input}
@@ -395,7 +395,7 @@ export default function Dashboard() {
                   onClick={handleSend}
                   disabled={sending || !input.trim()}
                   className="w-8 h-8 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150 flex items-center justify-center flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg, #833ab4, #fd1d1d)" }}
+                  style={{ background: "linear-gradient(135deg, #d97706, #ea580c)" }}
                   aria-label="Send"
                 >
                   {sending ? (
