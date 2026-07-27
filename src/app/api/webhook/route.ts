@@ -114,6 +114,11 @@ export async function POST(request: NextRequest) {
       return Response.json({ status: "stored_for_human" });
     }
 
+    // Agent pause — if AGENT_ACTIVE env var is not "true", store but don't reply
+    if (process.env.AGENT_ACTIVE !== "true") {
+      return Response.json({ status: "agent_paused" });
+    }
+
     // Fetch conversation history (last 20 messages for context)
     const { data: history } = await supabase
       .from("instagram_messages")
